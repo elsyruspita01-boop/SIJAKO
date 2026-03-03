@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SIJAKO - Sistem Janji Temu Konseling</title>
+<style>
+
+body{
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+}
+
+.navbar{
+    background:white;
+    padding:15px;
+    text-align:center;
+    font-weight:bold;
+    font-size:18px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.15);
+}
+
+.page{
+    display:none;
+    padding:20px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+.card{
+    background:white;
+    max-width:450px;
+    margin:30px auto;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+input, select, textarea{
+    width:100%;
+    padding:12px;
+    margin-bottom:12px;
+    border-radius:10px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    font-weight:bold;
+    cursor:pointer;
+    margin-bottom:8px;
+    transition:0.3s;
+}
+
+.btn-primary{ background:#4e73df; color:white; }
+.btn-success{ background:#1cc88a; color:white; }
+.btn-danger{ background:#e74a3b; color:white; }
+.btn-secondary{ background:#858796; color:white; }
+
+button:hover{ transform:scale(1.02); }
+
+.list-item{
+    background:#f8f9fc;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.status-menunggu{ color:#f6c23e; font-weight:bold; }
+.status-disetujui{ color:#1cc88a; font-weight:bold; }
+.status-ditolak{ color:#e74a3b; font-weight:bold; }
+
+.hidden{ display:none; }
+
+</style>
+</head>
+<body>
+
+<div class="navbar">
+SIJAKO - Sistem Janji Temu Konseling
+</div>
+
+<!-- LOGIN -->
+<div id="loginPage" class="page" style="display:block;">
+<div class="card">
+<h2>Login</h2>
+
+<select id="role">
+<option value="siswa">Siswa</option>
+<option value="konselor">Konselor</option>
+</select>
+
+<div id="kodeBox" class="hidden">
+<input type="text" id="kode" placeholder="Kode Akses Konselor">
+</div>
+
+<button class="btn-primary" onclick="login()">Masuk</button>
+</div>
+</div>
+
+<!-- SISWA -->
+<div id="siswaPage" class="page">
+<div class="card">
+<h2>Buat Janji Konseling</h2>
+
+<input type="text" id="nama" placeholder="Nama Lengkap" required>
+<input type="text" id="kelas" placeholder="Kelas" required>
+
+<select id="konselor">
+<option>Ibu Ani</option>
+<option>Bapak Budi</option>
+<option>Ibu Rina</option>
+</select>
+
+<input type="date" id="tanggal">
+<select id="jam">
+<option>08.00 - 09.00</option>
+<option>09.00 - 10.00</option>
+<option>10.00 - 11.00</option>
+<option>11.00 - 12.00</option>
+</select>
+
+<textarea id="tujuan" placeholder="Tujuan Konseling"></textarea>
+
+<button class="btn-success" onclick="buatJanji()">Kirim Janji</button>
+<button class="btn-secondary" onclick="kembaliLogin()">Kembali</button>
+</div>
+</div>
+
+<!-- KONSELOR -->
+<div id="konselorPage" class="page">
+<div class="card">
+<h2>Dashboard Konselor</h2>
+<div id="daftarJanji"></div>
+<button class="btn-secondary" onclick="kembaliLogin()">Kembali</button>
+</div>
+</div>
+
+<script>
+
+document.getElementById("role").addEventListener("change", function(){
+    if(this.value==="konselor"){
+        document.getElementById("kodeBox").classList.remove("hidden");
+    }else{
+        document.getElementById("kodeBox").classList.add("hidden");
+    }
+});
+
+function tampilHalaman(id){
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("siswaPage").style.display="none";
+    document.getElementById("konselorPage").style.display="none";
+    document.getElementById(id).style.display="block";
+}
+
+function login(){
+    let role = roleSelect.value || document.getElementById("role").value;
+
+    if(role==="konselor"){
+        if(document.getElementById("kode").value!=="kons123"){
+            alert("Kode salah");
+            return;
+        }
+        tampilHalaman("konselorPage");
+        tampilJanji();
+    }else{
+        tampilHalaman("siswaPage");
+    }
+}
+
+function kembaliLogin(){
+    location.reload();
+}
+
+function buatJanji(){
+    let semua = JSON.parse(localStorage.getItem("janji")) || [];
+
+    // CEK JADWAL BENTROK
+    let bentrok = semua.find(j =>
+        j.konselor===konselor.value &&
+        j.tanggal===tanggal.value &&
+        j.jam===jam.value &&
+        j.status==="Disetujui"
+    );
+
+    if(bentrok){
+        alert("Jadwal sudah diambil. Pilih waktu lain.");
+        return;
+    }
+
+    semua.push({
+        nama:nama.value,
+        kelas:kelas.value,
+        konselor:konselor.value,
+        tanggal:tanggal.value,
+        jam:jam.value,
+        tujuan:tujuan.value,
+        status:"Menunggu"
+    });
+
+    localStorage.setItem("janji", JSON.stringify(semua));
+    alert("Janji berhasil dikirim");
+}
+
+function tampilJanji(){
+    let semua = JSON.parse(localStorage.getItem("janji")) || [];
+    let container = document.getElementById("daftarJanji");
+    container.innerHTML="";
+
+    semua.forEach((item,index)=>{
+        let statusClass="";
+        if(item.status==="Menunggu") statusClass="status-menunggu";
+        if(item.status==="Disetujui") statusClass="status-disetujui";
+        if(item.status==="Ditolak") statusClass="status-ditolak";
+
+        container.innerHTML+=`
+        <div class="list-item">
+        <strong>${item.nama}</strong><br>
+        Kelas: ${item.kelas}<br>
+        ${item.tanggal} | ${item.jam}<br>
+        ${item.konselor}<br>
+        Status: <span class="${statusClass}">${item.status}</span><br><br>
+        <button class="btn-success" onclick="approve(${index})">Approve</button>
+        <button class="btn-danger" onclick="reject(${index})">Reject</button>
+        </div>
+        `;
+    });
+}
+
+function approve(index){
+    let semua = JSON.parse(localStorage.getItem("janji"));
+    semua[index].status="Disetujui";
+    localStorage.setItem("janji", JSON.stringify(semua));
+    tampilJanji();
+}
+
+function reject(index){
+    let semua = JSON.parse(localStorage.getItem("janji"));
+    semua[index].status="Ditolak";
+    localStorage.setItem("janji", JSON.stringify(semua));
+    tampilJanji();
+}
+
+</script>
+
+</body>
+</html>
