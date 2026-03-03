@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SIJAKO - Sistem Janji Temu Konseling</title>
+<style>
+body{
+    font-family: Arial;
+    padding:20px;
+    background:#f4f6f9;
+}
+.container{
+    max-width:600px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+input, select, textarea, button{
+    width:100%;
+    padding:8px;
+    margin-bottom:10px;
+}
+button{
+    background:#2e86de;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+button:hover{
+    background:#1b4f72;
+}
+.hidden{
+    display:none;
+}
+.card{
+    border:1px solid #ccc;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:5px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h2>Sistem Janji Temu Konseling Sekolah (SIJAKO)</h2>
+
+<!-- LOGIN -->
+<div id="loginPage">
+    <h3>Login</h3>
+
+    <label>Pilih Peran</label>
+    <select id="role">
+        <option value="siswa">Siswa</option>
+        <option value="konselor">Konselor</option>
+    </select>
+
+    <div id="kodeBox" class="hidden">
+        <label>Kode Akses Konselor</label>
+        <input type="text" id="kode">
+    </div>
+
+    <button onclick="login()">Login</button>
+</div>
+
+<!-- DASHBOARD SISWA -->
+<div id="siswaPage" class="hidden">
+    <h3>Dashboard Siswa</h3>
+
+    <input type="text" id="nama" placeholder="Nama Lengkap">
+    <input type="text" id="kelas" placeholder="Kelas">
+
+    <label>Pilih Konselor</label>
+    <select id="konselor">
+        <option>Ibu Ani</option>
+        <option>Bapak Budi</option>
+        <option>Ibu Rina</option>
+    </select>
+
+    <label>Pilih Tanggal</label>
+    <input type="date" id="tanggal">
+
+    <label>Pilih Jam</label>
+    <select id="jam">
+        <option>08.00 - 09.00</option>
+        <option>09.00 - 10.00</option>
+        <option>10.00 - 11.00</option>
+        <option>11.00 - 12.00</option>
+    </select>
+
+    <textarea id="tujuan" placeholder="Tujuan Konseling"></textarea>
+
+    <button onclick="buatJanji()">Kirim Janji Temu</button>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- DASHBOARD KONSELOR -->
+<div id="konselorPage" class="hidden">
+    <h3>Dashboard Konselor</h3>
+    <div id="listJanji"></div>
+    <button onclick="logout()">Logout</button>
+</div>
+
+</div>
+
+<script>
+document.getElementById("role").addEventListener("change", function(){
+    if(this.value === "konselor"){
+        document.getElementById("kodeBox").classList.remove("hidden");
+    } else {
+        document.getElementById("kodeBox").classList.add("hidden");
+    }
+});
+
+function login(){
+    let role = document.getElementById("role").value;
+
+    if(role === "konselor"){
+        let kode = document.getElementById("kode").value;
+        if(kode !== "kons123"){
+            alert("Kode akses salah");
+            return;
+        }
+        showKonselor();
+    } else {
+        showSiswa();
+    }
+}
+
+function showSiswa(){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("siswaPage").classList.remove("hidden");
+}
+
+function showKonselor(){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("konselorPage").classList.remove("hidden");
+    tampilkanJanji();
+}
+
+function logout(){
+    location.reload();
+}
+
+function buatJanji(){
+    let data = {
+        nama: document.getElementById("nama").value,
+        kelas: document.getElementById("kelas").value,
+        konselor: document.getElementById("konselor").value,
+        tanggal: document.getElementById("tanggal").value,
+        jam: document.getElementById("jam").value,
+        tujuan: document.getElementById("tujuan").value,
+        status: "Menunggu"
+    };
+
+    let semuaJanji = JSON.parse(localStorage.getItem("janji")) || [];
+    semuaJanji.push(data);
+    localStorage.setItem("janji", JSON.stringify(semuaJanji));
+
+    alert("Janji berhasil dibuat");
+    document.getElementById("nama").value="";
+    document.getElementById("kelas").value="";
+    document.getElementById("tujuan").value="";
+}
+
+function tampilkanJanji(){
+    let semuaJanji = JSON.parse(localStorage.getItem("janji")) || [];
+    let container = document.getElementById("listJanji");
+    container.innerHTML = "";
+
+    semuaJanji.forEach((item, index)=>{
+        container.innerHTML += `
+        <div class="card">
+            <strong>Nama:</strong> ${item.nama}<br>
+            <strong>Kelas:</strong> ${item.kelas}<br>
+            <strong>Konselor:</strong> ${item.konselor}<br>
+            <strong>Tanggal:</strong> ${item.tanggal}<br>
+            <strong>Jam:</strong> ${item.jam}<br>
+            <strong>Tujuan:</strong> ${item.tujuan}<br>
+            <strong>Status:</strong> ${item.status}
+        </div>
+        `;
+    });
+}
+</script>
+
+</body>
+</html>
